@@ -20,3 +20,6 @@ cursorObject = dataBase.cursor()
 cursorObject.execute("CREATE DATABASE crmDB")
 
 print("All Done!")
+
+
+#remember after connection is established this file is not needed anymore!!!
