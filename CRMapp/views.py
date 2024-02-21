@@ -3,22 +3,29 @@ from django.contrib.auth import authenticate,login,logout
 from django.contrib import messages
 from .forms import SignUpForm,AddRecordForm
 from .models import Record
+from django.shortcuts import get_object_or_404
 
 def home(request):
-    records = Record.objects.all()
+    if request.user.is_authenticated:
+        # Retrieve records associated with the current user
+        records = Record.objects.filter(user=request.user)
+    else:
+        records = None
+
     if request.method == 'POST':
-        username=request.POST.get('username')
-        password=request.POST.get('password') 
-        user=authenticate(request,username=username,password=password)
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
         if user is not None:
-            login(request,user)
-            messages.success(request,"Your are login successful") 
+            login(request, user)
+            messages.success(request, "You are logged in successfully.")
+            # Redirect to the same page after login
             return redirect('home')
         else:
-            messages.success(request,"Enter Login Credentials Correctly")
+            messages.error(request, "Incorrect username or password. Please try again.")
             return redirect('home')
     else:
-        return render(request,'home.html', {'records':records})
+        return render(request, 'home.html', {'records': records})
 
 
 def logout_user(request):
@@ -27,77 +34,72 @@ def logout_user(request):
     return redirect('home')
 
 
-
 def register_user(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
-            form.save()
-			# Authenticate and login
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password1']
-            user = authenticate(username=username, password=password)
+            user = form.save()
+            # Authenticate and login
             login(request, user)
-            messages.success(request, "You Have Successfully Registered! Welcome!")
+            messages.success(request, "You have successfully registered! Welcome!")
             return redirect('home')
     else:
         form = SignUpForm()
-        return render(request, 'register.html', {'form':form})
-
-    return render(request, 'register.html', {'form':form})
-
+    return render(request, 'register.html', {'form': form})
 
 
 
 def customer_record(request, pk):
-	if request.user.is_authenticated:
-		# Look Up Records
-		customer_record = Record.objects.get(id=pk)
-		return render(request, 'record.html', {'customer_record':customer_record})
-	else:
-		messages.success(request, "You Must Be Logged In To View That Page...")
-		return redirect('home')
-     
+    if request.user.is_authenticated:
+        # Look up records only for the current user
+        customer_record = get_object_or_404(Record, pk=pk, user=request.user)
+        return render(request, 'record.html', {'customer_record': customer_record})
+    else:
+        messages.error(request, "You must be logged in to view that page.")
+        return redirect('home')
+
 
 
 
 
 def delete_record(request, pk):
-	if request.user.is_authenticated:
-		delete_it = Record.objects.get(id=pk)
-		delete_it.delete()
-		messages.success(request, "Record Deleted Successfully...")
-		return redirect('home')
-	else:
-		messages.success(request, "You Must Be Logged In To Do That...")
-		return redirect('home')
-
-
+    if request.user.is_authenticated:
+        # Ensure the record being deleted belongs to the current user
+        delete_it = get_object_or_404(Record, id=pk, user=request.user)
+        delete_it.delete()
+        messages.success(request, "Record deleted successfully.")
+    else:
+        messages.error(request, "You must be logged in to do that.")
+    return redirect('home')
 
 def add_record(request):
-	form = AddRecordForm(request.POST or None)
-	if request.user.is_authenticated:
-		if request.method == "POST":
-			if form.is_valid():
-				add_record = form.save()
-				messages.success(request, "Record Added...")
-				return redirect('home')
-		return render(request, 'add_record.html', {'form':form})
-	else:
-		messages.success(request, "You Must Be Logged In...")
-		return redirect('home')
+    if request.user.is_authenticated:
+        form = AddRecordForm(request.POST or None)
+        if request.method == "POST":
+            if form.is_valid():
+                # Associate the new record with the current user before saving
+                add_record = form.save(commit=False)
+                add_record.user = request.user
+                add_record.save()
+                messages.success(request, "Record added successfully.")
+                return redirect('home')
+        return render(request, 'add_record.html', {'form': form})
+    else:
+        messages.error(request, "You must be logged in to do that.")
+        return redirect('home')
 
 def update_record(request, pk):
-	if request.user.is_authenticated:
-		current_record = Record.objects.get(id=pk)
-		form = AddRecordForm(request.POST or None, instance=current_record)
-		if form.is_valid():
-			form.save()
-			messages.success(request, "Record Has Been Updated!")
-			return redirect('home')
-		return render(request, 'update_record.html', {'form':form})
-	else:
-		messages.success(request, "You Must Be Logged In...")
-		return redirect('home')
+    if request.user.is_authenticated:
+        current_record = get_object_or_404(Record, id=pk, user=request.user)
+        form = AddRecordForm(request.POST or None, instance=current_record)
+        if request.method == "POST":
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Record updated successfully.")
+                return redirect('home')
+        return render(request, 'update_record.html', {'form': form})
+    else:
+        messages.error(request, "You must be logged in to do that.")
+        return redirect('home')
 
 
