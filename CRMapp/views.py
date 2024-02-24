@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 
 def home(request):
     if request.user.is_authenticated:
-        # Retrieve records associated with the current user
+        
         records = Record.objects.filter(user=request.user)
     else:
         records = None
@@ -19,7 +19,7 @@ def home(request):
         if user is not None:
             login(request, user)
             messages.success(request, "You are logged in successfully.")
-            # Redirect to the same page after login
+            
             return redirect('home')
         else:
             messages.error(request, "Incorrect username or password. Please try again.")
@@ -39,7 +39,7 @@ def register_user(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # Authenticate and login
+            
             login(request, user)
             messages.success(request, "You have successfully registered! Welcome!")
             return redirect('home')
@@ -51,7 +51,7 @@ def register_user(request):
 
 def customer_record(request, pk):
     if request.user.is_authenticated:
-        # Look up records only for the current user
+        
         customer_record = get_object_or_404(Record, pk=pk, user=request.user)
         return render(request, 'record.html', {'customer_record': customer_record})
     else:
@@ -64,7 +64,7 @@ def customer_record(request, pk):
 
 def delete_record(request, pk):
     if request.user.is_authenticated:
-        # Ensure the record being deleted belongs to the current user
+        
         delete_it = get_object_or_404(Record, id=pk, user=request.user)
         delete_it.delete()
         messages.success(request, "Record deleted successfully.")
@@ -77,7 +77,7 @@ def add_record(request):
         form = AddRecordForm(request.POST or None)
         if request.method == "POST":
             if form.is_valid():
-                # Associate the new record with the current user before saving
+                
                 add_record = form.save(commit=False)
                 add_record.user = request.user
                 add_record.save()

@@ -39,8 +39,8 @@
                 <td>{{ record.zipcode }}</td>
                 <td>{{ record.created_at }}</td>
                 <td>{{ record.id }}</td>
-                <td><a href="{% url 'update_record' record.id %}" class="btn btn-secondary">Update</a></td>
-                <td><a href="{% url 'record' record.id %}" class="btn btn-secondary">View</a></td>
+                <td><a href="{% url 'update_record' record.id %}" class="btn btn-primary">Update</a></td>
+                <td><a href="{% url 'record' record.id %}" class="btn btn-primary">View</a></td>
             </tr>
         {% endfor %}
             
@@ -64,7 +64,7 @@
             <input type="password" class="form-control" name="password" placeholder="Password" required >
         </div>
         <br>      
-        <button type="submit" class="btn btn-secondary">Login</button>
+        <button type="submit" class="btn btn-primary">Login</button>
 </form>
 
 </div>
